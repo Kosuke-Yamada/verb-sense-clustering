@@ -1,0 +1,14 @@
+__pycache__/
+.ipynb_checkpoints/
+*~
+
+.vscode/
+*mlruns*
+
+data/
+
+*.ipynb
+*try*
+*old*
+*copy*
+*unuse*
