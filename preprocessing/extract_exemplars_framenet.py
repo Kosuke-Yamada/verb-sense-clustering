@@ -11,13 +11,11 @@ from tqdm import tqdm
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_path", type=str, default="../../data/raw/FNDATA-1.7/lu"
-    )
+    parser.add_argument("--input_path", type=str, default="../data/raw/FNDATA-1.7/lu")
     parser.add_argument(
         "--output_path",
         type=str,
-        default="../../data/preprocessing/framenet",
+        default="../data/preprocessing/framenet",
     )
     return parser.parse_args()
 
@@ -88,7 +86,7 @@ def make_exemplars_dataframe(df, input_path):
 
                     output_dict.update(
                         {
-                            "text": text,
+                            "text_widx": text,
                             "lu_id": str(lu_id),
                             "frame_name": id2frame[lu_id],
                             "verb": verb.split(".")[0],
