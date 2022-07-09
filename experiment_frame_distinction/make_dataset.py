@@ -12,14 +12,13 @@ def parse_args():
     RESOURCE = ["framenet", "propbank"][1]
 
     parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_path", type=str, default="../data/preprocessing/" + RESOURCE
-    )
+    parser.add_argument("--input_path", type=str, default="../data/preprocessing")
     parser.add_argument(
         "--output_path",
         type=str,
-        default="../data/experiment_frame_distinction/dataset/" + RESOURCE,
+        default="../data/experiment_frame_distinction/dataset",
     )
+    parser.add_argument("--resource", type=str, default=RESOURCE)
     parser.add_argument("--min_lu", type=int, default=2)
     parser.add_argument("--max_lu", type=int, default=10)
     parser.add_argument("--min_text", type=int, default=20)
@@ -27,8 +26,11 @@ def parse_args():
     return parser.parse_args()
 
 
-def make_dir_path(input_path, output_path):
-    path_dict = {"input": input_path, "output": output_path}
+def make_dir_path(input_path, output_path, resource):
+    path_dict = {
+        "input": "/".join([input_path, resource]),
+        "output": "/".join([output_path, resource]),
+    }
     for key, path in path_dict.items():
         path_dict[key] = os.path.abspath(path) + "/"
         if "output" in key:
@@ -65,7 +67,7 @@ def decide_sets(df):
 
 def main():
     args = parse_args()
-    path_dict = make_dir_path(args.input_path, args.output_path)
+    path_dict = make_dir_path(args.input_path, args.output_path, args.resource)
 
     df = pd.read_json(
         path_dict["input"] + "exemplars.jsonl", orient="records", lines=True
@@ -75,7 +77,7 @@ def main():
     df_output = filter_examples(
         df, args.min_lu, args.max_lu, args.min_text, args.max_text
     )
-    df_output["sets"] = decide_sets(df)
+    df_output["sets"] = decide_sets(df_output)
 
     df_output.to_json(
         path_dict["output"] + "exemplars.jsonl",
