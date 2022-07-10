@@ -15,11 +15,12 @@ from _verb_sense_clustering import VerbSenseClustering
 def parse_args():
     RESOURCE = ["framenet", "propbank"][0]
     MODEL_NAME = [
+        "all-in-one-cluster",
         "elmo",
         "bert-base-uncased",
         "bert-large-uncased",
-        "albert-base-v2",
         "roberta-base",
+        "albert-base-v2",
         "gpt2",
         "xlnet-base-cased",
     ][0]
@@ -98,27 +99,28 @@ def main():
     for verb in tqdm(sorted(set(df["verb"]))):
         df_verb = df[df["verb"] == verb].copy()
         vec_verb = vec_array[df_verb.index]
-        df_verb["cluster_id"] = vsc.run_clustering(
-            vec_verb, len(set(df_verb["frame_name"]))
-        )
+        if args.model_name == "all-in-one-cluster":
+            df_verb["cluster_id"] = vsc.run_all_in_one_cluster(vec_verb)
+        else:
+            df_verb["cluster_id"] = vsc.run_clustering(
+                vec_verb, len(set(df_verb["frame_name"]))
+            )
         score = vsc.calc_matching_scores(df_verb["frame_name"], df_verb["cluster_id"])
         output_list.append({"verb": verb, "score": score})
 
     df_output = pd.DataFrame(output_list)
+    file_path = "verb_scores_" + str(args.layer).zfill(2) + ".jsonl"
     df_output.to_json(
-        path_dict["output_" + args.sets]
-        + "verb_scores_"
-        + str(layer).zfill(2)
-        + ".jsonl",
+        path_dict["output_" + args.sets] + file_path,
         orient="records",
         force_ascii=False,
         lines=True,
     )
 
-    with open(
-        path_dict["output_" + args.sets] + "score_" + str(layer).zfill(2) + ".json", "w"
-    ) as f:
-        json.dump({"score": df_output["score"].mean()}, f, indent=2, ensure_ascii=False)
+    score_dict = {"score": df_output["score"].mean(), "layer": layer}
+    file_path = "score_" + str(args.layer).zfill(2) + ".json"
+    with open(path_dict["output_" + args.sets] + file_path, "w") as f:
+        json.dump(score_dict, f, indent=2, ensure_ascii=False)
 
 
 if __name__ == "__main__":

@@ -1,3 +1,4 @@
+import numpy as np
 import pandas as pd
 from scipy.optimize import linear_sum_assignment
 from sklearn.mixture import GaussianMixture
@@ -34,6 +35,9 @@ class VerbSenseClustering:
         )
         gmm.fit(vec_array)
         return gmm.predict(vec_array)
+
+    def run_all_in_one_cluster(self, vec_array):
+        return np.zeros(len(vec_array)).astype(int)
 
     def calc_matching_scores(self, true_array, pred_array):
         df_matrix = pd.DataFrame(

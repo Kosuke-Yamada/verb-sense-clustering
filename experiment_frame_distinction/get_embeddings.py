@@ -15,17 +15,18 @@ from _model import EmbeddingsNet
 
 
 def parse_args():
-    RESOURCE = ["framenet", "propbank"][0]
+    RESOURCE = ["framenet", "propbank"][1]
     DEVICE = ["cuda:0", "cuda:1", "cuda:2", "cuda:3", "cpu"][0]
     MODEL_NAME = [
+        "all-in-one-cluster",
         "elmo",
         "bert-base-uncased",
         "bert-large-uncased",
-        "albert-base-v2",
         "roberta-base",
+        "albert-base-v2",
         "gpt2",
         "xlnet-base-cased",
-    ][0]
+    ][-1]
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
@@ -41,8 +42,8 @@ def parse_args():
     )
 
     parser.add_argument("--resource", type=str, default=RESOURCE)
-    parser.add_argument("--model_name", type=str, default=MODEL_NAME)
     parser.add_argument("--device", type=str, default=DEVICE)
+    parser.add_argument("--model_name", type=str, default=MODEL_NAME)
     parser.add_argument("--batch_size", type=int, default=32)
     return parser.parse_args()
 
@@ -75,28 +76,31 @@ def main():
         path_dict["input"] + "exemplars.jsonl", orient="records", lines=True
     )
 
-    if args.model_name in ["elmo"]:
-        model = EmbeddingsNet(args.model_name, args.device, path=path_dict["elmo"])
-        collate_fn = collate_fn_elmo
-        layer = 2
+    if args.model_name in ["all-in-one-cluster"]:
+        vec_dict = {0: [[0]] * len(df)}
     else:
-        model = EmbeddingsNet(args.model_name, args.device)
-        collate_fn = collate_fn_transformers
-        layer = 24 if args.model_name in ["bert-large-uncased"] else 12
+        if args.model_name in ["elmo"]:
+            model = EmbeddingsNet(args.model_name, args.device, path=path_dict["elmo"])
+            collate_fn = collate_fn_elmo
+            layer = 2
+        else:
+            model = EmbeddingsNet(args.model_name, args.device)
+            collate_fn = collate_fn_transformers
+            layer = 24 if args.model_name in ["bert-large-uncased"] else 12
 
-    dl = DataLoader(
-        EmbeddingsDataset(df, args.model_name),
-        batch_size=args.batch_size,
-        collate_fn=collate_fn,
-        shuffle=False,
-    )
+        dl = DataLoader(
+            EmbeddingsDataset(df, args.model_name),
+            batch_size=args.batch_size,
+            collate_fn=collate_fn,
+            shuffle=False,
+        )
 
-    vec_dict = {l: [] for l in range(layer + 1)}
-    for batch in tqdm(dl):
-        with torch.no_grad():
-            embs = model.get_vec(batch)
-            for l in range(layer + 1):
-                vec_dict[l] += list(embs[l].cpu().detach().numpy())
+        vec_dict = {l: [] for l in range(layer + 1)}
+        for batch in tqdm(dl):
+            with torch.no_grad():
+                embs = model.get_vec(batch)
+                for l in range(layer + 1):
+                    vec_dict[l] += list(embs[l].cpu().detach().numpy())
 
     df_vec = df.reset_index(drop=True).reset_index().rename(columns={"index": "vec_id"})
     df_vec.to_json(

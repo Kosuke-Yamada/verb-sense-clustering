@@ -51,3 +51,19 @@ for resource in framenet propbank; do
         --layer -1 \
         --sets test
 done
+
+# model_name=all-in-one-cluster
+# for resource in framenet propbank; do
+#     for layer in 0; do
+#         python verb_sense_clustering.py \
+#             --model_name ${model_name} \
+#             --resource ${resource} \
+#             --layer ${layer}
+#     done
+
+#     python verb_sense_clustering.py \
+#         --model_name ${model_name} \
+#         --resource ${resource} \
+#         --layer -1 \
+#         --sets test
+# done
