@@ -3,6 +3,8 @@ import pandas as pd
 from scipy.optimize import linear_sum_assignment
 from sklearn.mixture import GaussianMixture
 
+from vsc.scoring import eval_confusion_matrix
+
 
 class VerbSenseClustering:
     def __init__(self, n_seeds, covariance_type):
@@ -24,12 +26,10 @@ class VerbSenseClustering:
                 max_seed = s
         return max_seed
 
-    def run_clustering(self, vec_array, n_components):
-        seed = (
-            0 if self.n_seeds == 1 else self._repeat_clustering(vec_array, n_components)
-        )
+    def run_clustering(self, vec_array, n):
+        seed = 0 if self.n_seeds == 1 else self._repeat_clustering(vec_array, n)
         gmm = GaussianMixture(
-            n_components=n_components,
+            n_components=n,
             covariance_type=self.covariance_type,
             random_state=seed,
         )
@@ -57,3 +57,46 @@ class VerbSenseClustering:
         n_ex = df_matrix.sum().sum()
         score = count / n_ex
         return score
+
+    def run_clustering_abic(self, vec_array, n_clusters):
+        output_list = []
+        for n in range(1, n_clusters + 1):
+            seed = 0 if self.n_seeds == 1 else self._repeat_clustering(vec_array, n)
+            gmm = GaussianMixture(
+                n_components=n,
+                covariance_type=self.covariance_type,
+                random_state=seed,
+            )
+            gmm.fit(vec_array)
+
+            output_list.append(
+                {
+                    "n_clusters": n,
+                    "first": -2 * gmm.score(vec_array) * vec_array.shape[0],
+                    "second": gmm._n_parameters() * np.log(vec_array.shape[0]),
+                }
+            )
+        return pd.DataFrame(output_list)
+
+    def aggregate_abic(self, df, c, max_n_frames, max_n_clusters):
+        df["bic"] = df["first"] + df["second"] * c
+
+        df_cm = pd.DataFrame(
+            index=range(1, max_n_frames + 1), columns=range(1, max_n_clusters + 1)
+        ).fillna(0)
+
+        output_list = []
+        for verb in sorted(set(df["verb"])):
+            df_verb = df[df["verb"] == verb]
+            df_min = df_verb[df_verb["bic"] == df_verb["bic"].min()]
+            n_frames = df_min["n_frames"].values[0]
+            n_clusters = df_min["n_clusters"].values[0]
+            df_cm.loc[n_frames, n_clusters] += 1
+
+            output_list.append(
+                {"verb": verb, "n_frames": n_frames, "n_clusters": n_clusters}
+            )
+        return df_cm, pd.DataFrame(output_list)
+
+    def scoring(self, df):
+        return eval_confusion_matrix(df)

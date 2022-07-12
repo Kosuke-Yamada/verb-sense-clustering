@@ -8,8 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
-
-from _verb_sense_clustering import VerbSenseClustering
+from vsc.clustering import VerbSenseClustering
 
 
 def parse_args():

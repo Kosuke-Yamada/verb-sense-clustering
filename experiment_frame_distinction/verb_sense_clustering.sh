@@ -22,7 +22,8 @@
 #         python verb_sense_clustering.py \
 #             --model_name ${model_name} \
 #             --resource ${resource} \
-#             --layer ${layer}
+#             --layer ${layer} \
+#               --sets dev
 #     done
 
 #     python verb_sense_clustering.py \
@@ -42,7 +43,8 @@ for resource in framenet propbank; do
         python verb_sense_clustering.py \
             --model_name ${model_name} \
             --resource ${resource} \
-            --layer ${layer}
+            --layer ${layer} \
+            --sets dev
     done
 
     python verb_sense_clustering.py \
@@ -58,7 +60,8 @@ done
 #         python verb_sense_clustering.py \
 #             --model_name ${model_name} \
 #             --resource ${resource} \
-#             --layer ${layer}
+#             --layer ${layer} \
+#               --sets dev
 #     done
 
 #     python verb_sense_clustering.py \

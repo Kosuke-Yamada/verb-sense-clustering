@@ -8,10 +8,9 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader
 from tqdm import tqdm
-
-from _collate_fn import collate_fn_elmo, collate_fn_transformers
-from _dataset import EmbeddingsDataset
-from _model import EmbeddingsNet
+from vsc.collate_fn import collate_fn_elmo, collate_fn_transformers
+from vsc.dataset import EmbeddingsDataset
+from vsc.model import EmbeddingsNet
 
 
 def parse_args():
