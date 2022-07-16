@@ -15,7 +15,7 @@ from vsc.clustering import VerbSenseClustering
 
 
 def parse_args():
-    RESOURCE = ["framenet", "propbank"][0]
+    RESOURCE = ["framenet", "propbank"][1]
     MODEL_NAME = [
         "all-in-one-cluster",
         "elmo",
@@ -54,7 +54,7 @@ def parse_args():
     parser.add_argument("--sets", type=str, default=SETS)
 
     parser.add_argument("--random_state", type=int, default=0)
-    parser.add_argument("--verb", type=str, default="")
+    parser.add_argument("--verb", type=str, default="all_verbs")
     return parser.parse_args()
 
 
@@ -146,7 +146,7 @@ def main():
 
     vsc = VerbSenseClustering(args.n_seeds, args.covariance_type)
 
-    if args.verb == "":
+    if args.verb == "all_verbs":
         verb_list = sorted(set(df["verb"]))
     else:
         verb_list = [args.verb]
