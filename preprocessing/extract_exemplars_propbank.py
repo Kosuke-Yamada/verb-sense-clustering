@@ -15,10 +15,10 @@ def parse_args():
     parser.add_argument(
         "--input_frame_path",
         type=str,
-        default="../data/raw/ONTONOTES/metadata/frames",
+        default="../data/raw/ontonotes/metadata/frames",
     )
     parser.add_argument(
-        "--input_anno_path", type=str, default="../data/raw/ONTONOTES/annotations"
+        "--input_anno_path", type=str, default="../data/raw/ontonotes/annotations"
     )
     parser.add_argument(
         "--output_path",

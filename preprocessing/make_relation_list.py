@@ -12,7 +12,7 @@ from tqdm import tqdm
 def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--input_path", type=str, default="../data/raw/FNDATA-1.7/frame"
+        "--input_path", type=str, default="../data/raw/fndata-1.7/frame"
     )
     parser.add_argument(
         "--output_path", type=str, default="../data/preprocessing/relations"
