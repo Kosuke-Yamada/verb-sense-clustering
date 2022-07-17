@@ -25,14 +25,14 @@ Before you start, you need to download the annotated data, [FrameNet](https://fr
 Note the file name if you use the source code directly.
 [FrameNet](https://www.nltk.org/howto/framenet.html) and [PropBank](https://www.nltk.org/howto/propbank.html) can also be downloaded from the [NLTK](https://www.nltk.org/index.html) library, but they differ from the code we used and require careful preprocessing.
 
-1. Preprocessing (`preprocessing/`)
+### 1. Preprocessing (`preprocessing/`)
 
 You extract examples, Lexical Units, frames, etc. from XML files for FrameNet (`extract_exemplars_framenet.py`) and PropBank (`extract_exemplars_propbank.py`).
 See `script/preprocessing_extract_exemplars_*.sh` when running these.
 
 In addition, frame-to-frame relationship data used in the experiment is extracted from the XML file in FrameNet (`make_relation_list.py`).
 
-2. Experiment on Frame Distinction (`experiment_frame_distinction/`)
+### 2. Experiment on Frame Distinction (`experiment_frame_distinction/`)
 
 First, you need to make datasets for this experiment (`make_dataset.py`).
 Next, the contextualized wordembeddings of the target verbs are obtained (`get_embeddings.py`). 
@@ -42,7 +42,7 @@ Then, frame distinction can be performed by clustering on the basis of the embed
 You can aggregate results by focusing on FrameNet frame-to-frame relationships (`aggregate_relations.py`).
 You can also visualize the contextualized word embedding of the target verb in two dimensions (`visualize_embeddings.py`).
 
-3. Experiment on Frame Number Estimation (`experiment_frame_number_estimation/`)
+### 3. Experiment on Frame Number Estimation (`experiment_frame_number_estimation/`)
 
 First, you need to make datasets for this experiment (`make_dataset.py`).
 Next, the contextualized word embeddings of the target verbs are obtained (`get_embeddings.py`). 
@@ -52,7 +52,7 @@ Then, frame number estimation can be performed by clustering on the basis of the
 ## Citation
 
 Please cite our paper if this source code is helpful in your work.
-```
+```bibtex
 @inproceedings{yamada-etal-2021-verb,
     title = "Verb Sense Clustering using Contextualized Word Representations for Semantic Frame Induction",
     author = "Yamada, Kosuke  and
