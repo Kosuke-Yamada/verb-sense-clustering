@@ -24,6 +24,11 @@ $ pip install -e .
 Before you start, you need to download the annotated data, [FrameNet](https://framenet.icsi.berkeley.edu/fndrupal/framenet_request_data) and [PropBank](https://github.com/propbank/propbank-release/tree/master/data/ontonotes).
 Note the file name if you use the source code directly.
 [FrameNet](https://www.nltk.org/howto/framenet.html) and [PropBank](https://www.nltk.org/howto/propbank.html) can also be downloaded from the [NLTK](https://www.nltk.org/index.html) library, but they differ from the code we used and require careful preprocessing.
+To make it run as scripted, put the data in `data/raw`, like `data/raw/fndata-1.7` or `data/raw/ontonotes`.
+
+Also, you will need the files of the pre-trained models (`Original`) on [this site](https://allenai.org/allennlp/software/elmo) to experiment with ELMo.
+To make it run as scripted, put the data in `data/raw/elmo`.
+The file names would be `elmo_2x4096_512_2048cnn_2xhighway_options.json` and ` elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5`.
 
 ### 1. Preprocessing (`preprocessing/`)
 
