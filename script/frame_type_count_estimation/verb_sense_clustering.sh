@@ -1,5 +1,8 @@
 #!/bin/sh
 
+source_dir=../../source/frame_type_count_estimation
+data_dir=../../data/frame_type_count_estimation
+
 model_name=bert-large-uncased
 
 #resource=framenet
@@ -8,10 +11,10 @@ resource=propbank
 criterion=bic
 #criterion=abic
 
-python verb_sense_clustering.py \
-    --input_path ../data/experiment_frame_number_estimation/embeddings \
+python ${source_dir}/verb_sense_clustering.py \
+    --input_path ${data_dir}/embeddings \
     --dev_path ../data/experiment_frame_distinction/frame_distinction \
-    --output_path ../data/experiment_frame_number_estimation/frame_number_estimation \
+    --output_path ${data_dir}/frame_number_estimation \
     --model_name ${model_name} \
     --resource ${resource} \
     --layer -1 \
@@ -20,10 +23,10 @@ python verb_sense_clustering.py \
     --n_seeds 5 \
     --covariance_type spherical
 
-python verb_sense_clustering.py \
-    --input_path ../data/experiment_frame_number_estimation/embeddings \
+python ${source_dir}/verb_sense_clustering.py \
+    --input_path ${data_dir}/embeddings \
     --dev_path ../data/experiment_frame_distinction/frame_distinction \
-    --output_path ../data/experiment_frame_number_estimation/frame_number_estimation \
+    --output_path ${data_dir}/frame_number_estimation \
     --model_name ${model_name} \
     --resource ${resource} \
     --layer -1 \

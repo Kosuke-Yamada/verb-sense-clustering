@@ -8,6 +8,7 @@ import os
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
+
 from vsc.clustering import VerbSenseClustering
 
 
@@ -63,6 +64,7 @@ def make_dir_path(input_path, output_path, resource, model_name):
 
 def main():
     args = parse_args()
+    print(args)
     path_dict = make_dir_path(
         args.input_path,
         args.output_path,
@@ -85,7 +87,8 @@ def main():
         path_dict["input"] + "exemplars.jsonl", orient="records", lines=True
     )
     vec_array = np.load(
-        path_dict["input"] + "vec_" + str(layer).zfill(2) + ".npz", allow_pickle=True
+        path_dict["input"] + "vec_" + str(layer).zfill(2) + ".npz",
+        allow_pickle=True,
     )["vec"]
 
     df = df[df["sets"] == args.sets]
@@ -104,7 +107,9 @@ def main():
             df_verb["cluster_id"] = vsc.run_clustering(
                 vec_verb, len(set(df_verb["frame_name"]))
             )
-        score = vsc.calc_matching_scores(df_verb["frame_name"], df_verb["cluster_id"])
+        score = vsc.calc_matching_scores(
+            df_verb["frame_name"], df_verb["cluster_id"]
+        )
         output_list.append({"verb": verb, "score": score})
 
     df_output = pd.DataFrame(output_list)

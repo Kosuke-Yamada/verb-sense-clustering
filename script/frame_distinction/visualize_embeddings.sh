@@ -1,5 +1,8 @@
 #!/bin/sh
 
+source_dir=../../source/frame_distinction
+data_dir=../../data/frame_distinction
+
 resource=framenet
 #resource=propbank
 
@@ -15,10 +18,10 @@ model_name=bert-large-uncased
 #sets=dev
 sets=test
 
-python ../experiment_frame_distinction/visualize_embeddings.py \
-    --input_path ../data/experiment_frame_distinction/embeddings \
-    --dev_path ../data/experiment_frame_distinction/frame_distinction \
-    --output_path ../data/experiment_frame_distinction/visualization \
+python ${source_dir}/visualize_embeddings.py \
+    --input_path ${data_dir}/embeddings \
+    --dev_path ${data_dir}/frame_distinction \
+    --output_path ${data_dir}/visualization \
     --resource ${resource} \
     --model_name ${model_name} \
     --layer -1 \

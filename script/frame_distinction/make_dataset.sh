@@ -1,11 +1,15 @@
 #!/bin/sh
 
+source_dir=../../source/frame_distinction
+data_dir=../../data/frame_distinction
+input_dir=../../data/preprocessing
+
 resource=framenet
 #resource=propbank
 
-python ../experiment_frame_distinction/make_dataset.py \
-    --input_path ../data/preprocessing \
-    --output_path ../data/experiment_frame_distinction/dataset \
+python ${source_dir}/make_dataset.py \
+    --input_path ${input_dir} \
+    --output_path ${data_dir}/dataset \
     --resource ${resource} \
     --min_lu 2 \
     --max_lu 10 \

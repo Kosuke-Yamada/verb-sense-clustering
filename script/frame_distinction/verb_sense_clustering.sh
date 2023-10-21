@@ -1,5 +1,8 @@
 #!/bin/sh
 
+source_dir=../../source/frame_distinction
+data_dir=../../data/frame_distinction
+
 resource=framenet
 #resource=propbank
 
@@ -21,9 +24,9 @@ layers=(0 1 2 3 4 5 6 7 8 9 10 11 12)
 
 for resource in framenet propbank; do
     for layer in ${layers[@]}; do
-        python ../experiment_frame_distinction/verb_sense_clustering.py \
-            --input_path ../data/experiment_frame_distinction/embeddings \
-            --output_path ../data/experiment_frame_distinction/frame_distinction \
+        python ${source_dir}/verb_sense_clustering.py \
+            --input_path ${data_dir}/embeddings \
+            --output_path ${data_dir}/frame_distinction \
             --resource ${resource} \
             --model_name ${model_name} \
             --layer ${layer} \
@@ -33,9 +36,9 @@ for resource in framenet propbank; do
     done
 
     layer=-1
-    python ../experiment_frame_distinction/verb_sense_clustering.py \
-        --input_path ../data/experiment_frame_distinction/embeddings \
-        --output_path ../data/experiment_frame_distinction/frame_distinction \
+    python ${source_dir}/verb_sense_clustering.py \
+        --input_path ${data_dir}/embeddings \
+        --output_path ${data_dir}/frame_distinction \
         --resource ${resource} \
         --model_name ${model_name} \
         --layer ${layer} \

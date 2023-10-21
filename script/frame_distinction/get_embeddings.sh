@@ -1,5 +1,9 @@
 #!/bin/sh
 
+source_dir=../../source/frame_distinction
+data_dir=../../data/frame_distinction
+input_dir=../../donwload/elmo
+
 resource=framenet
 #resource=propbank
 
@@ -14,9 +18,9 @@ model_name=elmo
 #model_name=xlnet-base-cased
 
 python ../experiment_frame_distinction/get_embeddings.py \
-    --input_path ../data/experiment_frame_distinction/dataset \
-    --elmo_path ../data/raw/elmo \
-    --output_path ../data/experiment_frame_distinction/embeddings \
+    --input_path ${data_dir}/dataset \
+    --elmo_path ${input_dir} \
+    --output_path ${data_dir}/embeddings \
     --model_name ${model_name} \
     --device ${device} \
     --resource ${resource} \

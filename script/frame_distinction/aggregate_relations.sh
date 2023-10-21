@@ -1,5 +1,9 @@
 #!/bin/sh
 
+source_dir=../../source/frame_distinction
+data_dir=../../data/frame_distinction
+input_dir=../../data/preprocessing
+
 model_name=all-in-one-cluster
 #model_name=elmo
 #model_name=bert-base-uncased
@@ -12,11 +16,11 @@ model_name=all-in-one-cluster
 #sets=dev
 sets=test
 
-python aggregate_relations.py \
-    --dataset_path ../data/experiment_frame_distinction/dataset/framenet \
-    --score_path ../data/experiment_frame_distinction/frame_distinction/framenet \
-    --f2f_path ../data/preprocessing/relations \
-    --output_path ../data/experiment_frame_distinction/relations \
+python ${source_dir}/aggregate_relations.py \
+    --dataset_path ${data_dir}/dataset/framenet \
+    --score_path ${data_dir}/frame_distinction/framenet \
+    --f2f_path ${input_dir}/relations \
+    --output_path ${data_dir}/relations \
     --model_name ${model_name} \
     --layer -1 \
     --sets ${sets}
