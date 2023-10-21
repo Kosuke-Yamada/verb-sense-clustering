@@ -5,7 +5,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from vsc.data_utils import write_json
+from vsc.data_utils import write_jsonl
 
 
 def make_exemplars(frames, anno_list):
@@ -65,7 +65,7 @@ def main(args):
         args.input_frame_dir.glob("*.xml"),
         args.input_annotation_dir.glob("*/*/*/*.onf"),
     )
-    write_json(outputs, args.output_dir / "exemplars.jsonl")
+    write_jsonl(outputs, args.output_dir / "exemplars.jsonl")
 
 
 if __name__ == "__main__":

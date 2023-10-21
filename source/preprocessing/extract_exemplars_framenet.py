@@ -5,7 +5,7 @@ from pathlib import Path
 import pandas as pd
 from tqdm import tqdm
 
-from vsc.data_utils import write_json
+from vsc.data_utils import write_jsonl
 
 
 def make_lu_list(files):
@@ -86,7 +86,7 @@ def main(args):
 
     df_lu = make_lu_list(args.input_dir.glob("lu*.xml"))
     outputs = make_exemplars(df_lu, args.input_dir)
-    write_json(outputs, args.output_dir / "exemplars.jsonl")
+    write_jsonl(outputs, args.output_dir / "exemplars.jsonl")
 
 
 if __name__ == "__main__":

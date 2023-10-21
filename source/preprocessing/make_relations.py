@@ -4,7 +4,7 @@ from pathlib import Path
 
 from tqdm import tqdm
 
-from vsc.data_utils import write_json
+from vsc.data_utils import write_jsonl
 
 
 def make_f2f_dataframe(input_files, relations):
@@ -57,7 +57,7 @@ def main(args):
     }
 
     outputs = make_f2f_dataframe(args.input_dir.glob("*.xml"), relations)
-    write_json(outputs, args.output_dir / "f2f_list.jsonl")
+    write_jsonl(outputs, args.output_dir / "f2f_list.jsonl")
 
 
 if __name__ == "__main__":
