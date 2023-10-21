@@ -8,14 +8,14 @@ from torch.utils.data import DataLoader
 from tqdm import tqdm
 
 from vsc.collate_fn import collate_fn_elmo, collate_fn_transformers
-from vsc.data_utils import write_jsonl
+from vsc.data_utils import read_jsonl, write_jsonl
 from vsc.dataset import EmbeddingsDataset
 from vsc.model import EmbeddingsNet
 
 
 def main(args):
     args.output_dir.mkdir(parents=True, exist_ok=True)
-    df = pd.read_json(args.input_file, orient="records", lines=True)
+    df = pd.DataFrame(read_jsonl(args.input_file))
 
     if args.model_name in ["all-in-one-cluster"]:
         vec_dict = {0: [[0]] * len(df)}
@@ -70,7 +70,6 @@ if __name__ == "__main__":
     parser.add_argument("--elmo_dir", type=Path, required=True)
     parser.add_argument("--output_dir", type=Path, required=True)
 
-    parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument(
         "--model_name",
         type=str,
@@ -85,7 +84,9 @@ if __name__ == "__main__":
             "xlnet-base-cased",
         ],
     )
+    parser.add_argument("--device", type=str, default="cuda:0")
     parser.add_argument("--batch_size", type=int, default=32)
+
     args = parser.parse_args()
     print(args)
     main(args)

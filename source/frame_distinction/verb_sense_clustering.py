@@ -1,5 +1,4 @@
 import argparse
-import json
 from pathlib import Path
 
 import numpy as np
@@ -7,7 +6,7 @@ import pandas as pd
 from tqdm import tqdm
 
 from vsc.clustering import VerbSenseClustering
-from vsc.data_utils import write_json, write_jsonl
+from vsc.data_utils import read_json, read_jsonl, write_json, write_jsonl
 
 
 def main(args):
@@ -15,17 +14,14 @@ def main(args):
     if args.layer == "best":
         best_score, layer = -1, -1
         for file in args.input_dev_dir.glob("score-*.json"):
-            with open(file, "r") as f:
-                score = json.load(f)["score"]
+            score = read_json(file)["score"]
             if best_score < score:
                 best_score = score
                 layer = file.name.split("-")[1].split(".json")[0]
     else:
         layer = args.layer
 
-    df = pd.read_json(
-        args.input_dir / "exemplars.jsonl", orient="records", lines=True
-    )
+    df = pd.DataFrame(read_jsonl(args.input_dir / "exemplars.jsonl"))
     vec_array = np.load(
         args.input_dir / f"vec-{layer}.npz",
         allow_pickle=True,

@@ -1,36 +1,42 @@
-#!/bin/sh
+#!/bin/bash
 
 source_dir=../../source/frame_type_count_estimation
 data_dir=../../data/frame_type_count_estimation
+input_dir=../data/frame_distinction
+
+resource=framenet
+# resource=propbank
 
 model_name=bert-large-uncased
-
-#resource=framenet
-resource=propbank
 
 criterion=bic
 #criterion=abic
 
+d1=${resource}/${model_name}
+d2=${criterion}
+
+sets=dev
+d3=${sets}
 python ${source_dir}/verb_sense_clustering.py \
-    --input_path ${data_dir}/embeddings \
-    --dev_path ../data/experiment_frame_distinction/frame_distinction \
-    --output_path ${data_dir}/frame_number_estimation \
+    --input_dir ${data_dir}/embeddings/${d1} \
+    --input_dev_dir ${input_dir}/verb_sense_clustering/${d1}/dev \
+    --output_dir ${data_dir}/frame_type_count_estimation/${d1}/${d2}/${d3} \
     --model_name ${model_name} \
-    --resource ${resource} \
-    --layer -1 \
-    --sets dev \
+    --layer best \
+    --sets ${sets} \
     --criterion ${criterion} \
     --n_seeds 5 \
     --covariance_type spherical
 
+sets=test
+d3=${sets}
 python ${source_dir}/verb_sense_clustering.py \
-    --input_path ${data_dir}/embeddings \
-    --dev_path ../data/experiment_frame_distinction/frame_distinction \
-    --output_path ${data_dir}/frame_number_estimation \
+    --input_dir ${data_dir}/embeddings/${d1} \
+    --input_dev_dir ${input_dir}/verb_sense_clustering/${d1}/dev \
+    --output_dir ${data_dir}/frame_type_count_estimation/${d1}/${d2}/${d3} \
     --model_name ${model_name} \
-    --resource ${resource} \
-    --layer -1 \
-    --sets test \
+    --layer best \
+    --sets ${sets} \
     --criterion ${criterion} \
     --n_seeds 5 \
     --covariance_type spherical
