@@ -1,13 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
 source_dir=../../source/frame_distinction
 data_dir=../../data/frame_distinction
-input_dir=../../donwload/elmo
-
-resource=framenet
-#resource=propbank
-
-device=cuda:0
+input_dir=../../download/elmo
 
 model_name=elmo
 #model_name=bert-base-uncased
@@ -17,11 +12,18 @@ model_name=elmo
 #model_name=gpt2
 #model_name=xlnet-base-cased
 
-python ../experiment_frame_distinction/get_embeddings.py \
-    --input_path ${data_dir}/dataset \
-    --elmo_path ${input_dir} \
-    --output_path ${data_dir}/embeddings \
-    --model_name ${model_name} \
-    --device ${device} \
-    --resource ${resource} \
-    --batch_size 32
+resources=(framenet propbank)
+
+device=cuda:0
+
+for resource in ${resources[@]}; do
+    d1=${resource}
+    d2=${model_name}
+    CUDA_LAUNCH_BLOCKING=1 python ${source_dir}/get_embeddings.py \
+        --input_file ${data_dir}/dataset/${d1}/exemplars.jsonl \
+        --elmo_dir ${input_dir} \
+        --output_dir ${data_dir}/embeddings/${d1}/${d2} \
+        --model_name ${model_name} \
+        --device ${device} \
+        --batch_size 32
+done

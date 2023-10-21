@@ -11,7 +11,9 @@ def collate_fn_elmo(batch):
         "batch_size": len(batch),
     }
     output_dict["input_ids"] = batch_to_ids([b["input_words"] for b in batch])
-    output_dict["target_tidx"] = torch.LongTensor([b["target_tidx"] for b in batch])
+    output_dict["target_tidx"] = torch.LongTensor(
+        [b["target_tidx"] for b in batch]
+    )
 
     for b in batch:
         output_dict["verb"].append(b["verb"])
@@ -35,7 +37,9 @@ def collate_fn_transformers(batch):
         output_dict[input] = nn.utils.rnn.pad_sequence(
             [torch.LongTensor(b[input]) for b in batch], batch_first=True
         )
-    output_dict["target_tidx"] = torch.LongTensor([b["target_tidx"] for b in batch])
+    output_dict["target_tidx"] = torch.LongTensor(
+        [b["target_tidx"] for b in batch]
+    )
 
     for b in batch:
         output_dict["verb"].append(b["verb"])

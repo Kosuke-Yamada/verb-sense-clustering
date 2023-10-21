@@ -5,18 +5,20 @@ from transformers import AutoConfig, AutoModel
 
 
 class EmbeddingsNet(nn.Module):
-    def __init__(self, model_name, device, path=None):
+    def __init__(self, model_name, device, options=None, weights=None):
         super(EmbeddingsNet, self).__init__()
         self.model_name = model_name
         self.device = device
         if model_name in ["elmo"]:
-            options = path + "elmo_2x4096_512_2048cnn_2xhighway_options.json"
-            weights = path + "elmo_2x4096_512_2048cnn_2xhighway_weights.hdf5"
             self.model = Elmo(options, weights, 2, dropout=0).to(device)
             self.model_t = _ElmoCharacterEncoder(options, weights).to(device)
         else:
-            config = AutoConfig.from_pretrained(model_name, output_hidden_states=True)
-            self.model = AutoModel.from_pretrained(model_name, config=config).to(device)
+            config = AutoConfig.from_pretrained(
+                model_name, output_hidden_states=True
+            )
+            self.model = AutoModel.from_pretrained(
+                model_name, config=config
+            ).to(device)
 
     def _get_elmo(self, batch):
         input_ids = batch["input_ids"].to(self.device)
@@ -45,5 +47,7 @@ class EmbeddingsNet(nn.Module):
         else:
             embs = self._get_transformers(batch)
         return embs[
-            :, torch.LongTensor(range(len(batch["target_tidx"]))), batch["target_tidx"]
+            :,
+            torch.LongTensor(range(len(batch["target_tidx"]))),
+            batch["target_tidx"],
         ]

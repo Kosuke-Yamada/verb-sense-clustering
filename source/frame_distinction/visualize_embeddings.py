@@ -1,9 +1,6 @@
-# -*-coding:utf-8-*-
-
 import argparse
-import glob
 import json
-import os
+from pathlib import Path
 
 import matplotlib.pyplot as plt
 import numpy as np
@@ -11,65 +8,9 @@ import pandas as pd
 import seaborn as sns
 from sklearn.manifold import TSNE
 from tqdm import tqdm
+
 from vsc.clustering import VerbSenseClustering
-
-
-def parse_args():
-    RESOURCE = ["framenet", "propbank"][1]
-    MODEL_NAME = [
-        "all-in-one-cluster",
-        "elmo",
-        "bert-base-uncased",
-        "bert-large-uncased",
-        "roberta-base",
-        "albert-base-v2",
-        "gpt2",
-        "xlnet-base-cased",
-    ][3]
-    LAYER = -1
-    SETS = ["dev", "test"][1]
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_path",
-        type=str,
-        default="../data/experiment_frame_distinction/embeddings",
-    )
-    parser.add_argument(
-        "--dev_path",
-        type=str,
-        default="../data/experiment_frame_distinction/frame_distinction",
-    )
-    parser.add_argument(
-        "--output_path",
-        type=str,
-        default="../data/experiment_frame_distinction/visualization",
-    )
-
-    parser.add_argument("--resource", type=str, default=RESOURCE)
-    parser.add_argument("--model_name", type=str, default=MODEL_NAME)
-    parser.add_argument("--layer", type=int, default=LAYER)
-    parser.add_argument("--n_seeds", type=int, default=5)
-    parser.add_argument("--covariance_type", type=str, default="spherical")
-    parser.add_argument("--sets", type=str, default=SETS)
-
-    parser.add_argument("--random_state", type=int, default=0)
-    parser.add_argument("--verb", type=str, default="all_verbs")
-    return parser.parse_args()
-
-
-def make_dir_path(input_path, dev_path, output_path, resource, model_name, sets):
-    path_dict = {
-        "input": "/".join([input_path, resource, model_name]),
-        "dev": "/".join([dev_path, resource, model_name, "dev"]),
-        "output": "/".join([output_path, resource, model_name, sets]),
-    }
-    for key, path in path_dict.items():
-        path_dict[key] = os.path.abspath(path) + "/"
-        if "output" in key:
-            if not os.path.isdir(path_dict[key]):
-                os.makedirs(path_dict[key])
-    return path_dict
+from vsc.data_utils import read_jsonl
 
 
 def project_embeddings(df, vec_array, random_state):
@@ -83,7 +24,7 @@ def project_embeddings(df, vec_array, random_state):
     return df
 
 
-def save_visualization(output_path, df, title, detail=True):
+def save_visualization(output_file, df, title, detail=True):
     fig = plt.figure(figsize=(8, 8))
     fig.set_facecolor("white")
 
@@ -104,41 +45,39 @@ def save_visualization(output_path, df, title, detail=True):
         plt.legend(handles, labels, fontsize=20)
         plt.title(title, fontsize=24)
 
-        for (x, y, t) in zip(df["x"], df["y"], df["cluster_id"]):
-            plt.text(x, y, str(t), ha="center", va="bottom", color="black", fontsize=18)
+        for x, y, t in zip(df["x"], df["y"], df["cluster_id"]):
+            plt.text(
+                x,
+                y,
+                str(t),
+                ha="center",
+                va="bottom",
+                color="black",
+                fontsize=18,
+            )
     plt.tight_layout()
-    plt.savefig(output_path)
+    plt.savefig(output_file)
     plt.close()
 
 
-def main():
-    args = parse_args()
-    path_dict = make_dir_path(
-        args.input_path,
-        args.dev_path,
-        args.output_path,
-        args.resource,
-        args.model_name,
-        args.sets,
-    )
+def main(args):
+    args.output_dir.mkdir(parents=True, exist_ok=True)
 
-    if args.layer != -1:
-        layer = args.layer
-    else:
-        max_score, layer = -1, -1
-        for path in glob.glob(path_dict["dev"] + "score_*.json"):
-            with open(path, "r") as f:
+    if args.layer == "best":
+        best_score, layer = -1, -1
+        for file in args.input_dev_dir.glob("score-*.json"):
+            with open(file, "r") as f:
                 score = json.load(f)["score"]
-            if max_score < score:
-                max_score = score
-                layer = int(path.split("/")[-1].split("_")[1].split(".json")[0])
+            if best_score < score:
+                best_score = score
+                layer = file.name.split("-")[1].split(".json")[0]
+    else:
+        layer = args.layer
 
-    df = pd.read_json(
-        path_dict["input"] + "exemplars.jsonl", orient="records", lines=True
-    )
-    vec_array = np.load(
-        path_dict["input"] + "vec_" + str(layer).zfill(2) + ".npz", allow_pickle=True
-    )["vec"]
+    df = pd.DataFrame(read_jsonl(args.input_dir / "exemplars.jsonl"))
+    vec_array = np.load(args.input_dir / f"vec-{layer}.npz", allow_pickle=True)[
+        "vec"
+    ]
 
     df = df[df["sets"] == args.sets]
     vec_array = vec_array[df.index]
@@ -163,12 +102,43 @@ def main():
 
         df_prj = project_embeddings(df_verb, vec_verb, args.random_state)
 
-        file_path = "-".join([verb, str(args.random_state).zfill(2), "w"]) + ".png"
-        save_visualization(path_dict["output"] + file_path, df_prj, verb, True)
+        file = "-".join([verb, str(args.random_state).zfill(2), "w"]) + ".png"
+        save_visualization(args.output_dir / file, df_prj, verb, True)
 
-        file_path = "-".join([verb, str(args.random_state).zfill(2), "wo"]) + ".png"
-        save_visualization(path_dict["output"] + file_path, df_prj, verb, False)
+        file = "-".join([verb, str(args.random_state).zfill(2), "wo"]) + ".png"
+        save_visualization(args.output_dir / file, df_prj, verb, False)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_dir", type=Path, required=True)
+    parser.add_argument("--input_dev_dir", type=Path, required=True)
+    parser.add_argument("--output_dir", type=Path, required=True)
+
+    parser.add_argument(
+        "--resource", type=str, choices=["framenet", "propbank"]
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        choices=[
+            "all-in-one-cluster",
+            "elmo",
+            "bert-base-uncased",
+            "bert-large-uncased",
+            "roberta-base",
+            "albert-base-v2",
+            "gpt2",
+            "xlnet-base-cased",
+        ],
+    )
+    parser.add_argument("--layer", type=str, default="best")
+    parser.add_argument("--n_seeds", type=int, default=5)
+    parser.add_argument("--covariance_type", type=str, default="spherical")
+    parser.add_argument("--sets", type=str, choices=["dev", "test"])
+
+    parser.add_argument("--random_state", type=int, default=0)
+    parser.add_argument("--verb", type=str, default="all_verbs")
+    args = parser.parse_args()
+    print(args)
+    main(args)

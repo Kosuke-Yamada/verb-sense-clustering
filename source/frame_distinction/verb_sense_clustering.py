@@ -1,93 +1,33 @@
-# -*-coding:utf-8-*-
-
 import argparse
-import glob
 import json
-import os
+from pathlib import Path
 
 import numpy as np
 import pandas as pd
 from tqdm import tqdm
 
 from vsc.clustering import VerbSenseClustering
+from vsc.data_utils import write_json, write_jsonl
 
 
-def parse_args():
-    RESOURCE = ["framenet", "propbank"][0]
-    MODEL_NAME = [
-        "all-in-one-cluster",
-        "elmo",
-        "bert-base-uncased",
-        "bert-large-uncased",
-        "roberta-base",
-        "albert-base-v2",
-        "gpt2",
-        "xlnet-base-cased",
-    ][0]
-    LAYER = 0
-    SETS = ["dev", "test"][0]
-
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_path",
-        type=str,
-        default="../data/experiment_frame_distinction/embeddings",
-    )
-    parser.add_argument(
-        "--output_path",
-        type=str,
-        default="../data/experiment_frame_distinction/frame_distinction",
-    )
-
-    parser.add_argument("--resource", type=str, default=RESOURCE)
-    parser.add_argument("--model_name", type=str, default=MODEL_NAME)
-    parser.add_argument("--layer", type=int, default=LAYER)
-    parser.add_argument("--n_seeds", type=int, default=5)
-    parser.add_argument("--covariance_type", type=str, default="spherical")
-    parser.add_argument("--sets", type=str, default=SETS)
-    return parser.parse_args()
-
-
-def make_dir_path(input_path, output_path, resource, model_name):
-    path_dict = {
-        "input": "/".join([input_path, resource, model_name]),
-        "output_dev": "/".join([output_path, resource, model_name, "dev"]),
-        "output_test": "/".join([output_path, resource, model_name, "test"]),
-    }
-    for key, path in path_dict.items():
-        path_dict[key] = os.path.abspath(path) + "/"
-        if "output" in key:
-            if not os.path.isdir(path_dict[key]):
-                os.makedirs(path_dict[key])
-    return path_dict
-
-
-def main():
-    args = parse_args()
-    print(args)
-    path_dict = make_dir_path(
-        args.input_path,
-        args.output_path,
-        args.resource,
-        args.model_name,
-    )
-
-    if args.layer != -1:
-        layer = args.layer
-    else:
-        max_score, layer = -1, -1
-        for path in glob.glob(path_dict["output_dev"] + "score_*.json"):
-            with open(path, "r") as f:
+def main(args):
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+    if args.layer == "best":
+        best_score, layer = -1, -1
+        for file in args.input_dev_dir.glob("score-*.json"):
+            with open(file, "r") as f:
                 score = json.load(f)["score"]
-            if max_score < score:
-                max_score = score
-                layer = int(path.split("/")[-1].split("_")[1].split(".json")[0])
+            if best_score < score:
+                best_score = score
+                layer = file.name.split("-")[1].split(".json")[0]
+    else:
+        layer = args.layer
 
     df = pd.read_json(
-        path_dict["input"] + "exemplars.jsonl", orient="records", lines=True
+        args.input_dir / "exemplars.jsonl", orient="records", lines=True
     )
     vec_array = np.load(
-        path_dict["input"] + "vec_" + str(layer).zfill(2) + ".npz",
+        args.input_dir / f"vec-{layer}.npz",
         allow_pickle=True,
     )["vec"]
 
@@ -113,19 +53,40 @@ def main():
         output_list.append({"verb": verb, "score": score})
 
     df_output = pd.DataFrame(output_list)
-    file_path = "verb_scores_" + str(args.layer).zfill(2) + ".jsonl"
-    df_output.to_json(
-        path_dict["output_" + args.sets] + file_path,
-        orient="records",
-        force_ascii=False,
-        lines=True,
-    )
+    file = f"verb_scores-{args.layer}.jsonl"
+    write_jsonl(output_list, args.output_dir / file)
 
     score_dict = {"score": df_output["score"].mean(), "layer": layer}
-    file_path = "score_" + str(args.layer).zfill(2) + ".json"
-    with open(path_dict["output_" + args.sets] + file_path, "w") as f:
-        json.dump(score_dict, f, indent=2, ensure_ascii=False)
+    file = f"score-{args.layer}.json"
+    write_json(score_dict, args.output_dir / file)
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_dir", type=Path, required=True)
+    parser.add_argument("--output_dir", type=Path, required=True)
+    parser.add_argument("--input_dev_dir", type=Path, required=False)
+
+    parser.add_argument(
+        "--resource", type=str, choices=["framenet", "propbank"]
+    )
+    parser.add_argument(
+        "--model_name",
+        type=str,
+        choices=[
+            "all-in-one-cluster",
+            "elmo",
+            "bert-base-uncased",
+            "bert-large-uncased",
+            "roberta-base",
+            "albert-base-v2",
+            "gpt2",
+            "xlnet-base-cased",
+        ],
+    )
+    parser.add_argument("--layer", type=str, default="00")
+    parser.add_argument("--n_seeds", type=int, default=5)
+    parser.add_argument("--covariance_type", type=str, default="spherical")
+    parser.add_argument("--sets", type=str, choices=["dev", "test"])
+    args = parser.parse_args()
+    main(args)

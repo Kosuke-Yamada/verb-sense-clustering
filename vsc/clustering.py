@@ -11,29 +11,19 @@ class VerbSenseClustering:
         self.n_seeds = n_seeds
         self.covariance_type = covariance_type
 
-    def _repeat_clustering(self, vec_array, n_components):
+    def _repeat_clustering(self, vec_array, n):
         max_score, max_seed = -float("inf"), -1
-        for s in range(self.n_seeds):
-            gmm = GaussianMixture(
-                n_components=n_components,
-                covariance_type=self.covariance_type,
-                random_state=s,
-            )
-            gmm.fit(vec_array)
+        for seed in range(self.n_seeds):
+            gmm = self.gmm_fit(vec_array, n, seed)
             score = gmm.score(vec_array)
             if score >= max_score:
                 max_score = score
-                max_seed = s
+                max_seed = seed
         return max_seed
 
     def run_clustering(self, vec_array, n):
         seed = 0 if self.n_seeds == 1 else self._repeat_clustering(vec_array, n)
-        gmm = GaussianMixture(
-            n_components=n,
-            covariance_type=self.covariance_type,
-            random_state=seed,
-        )
-        gmm.fit(vec_array)
+        gmm = self.gmm_fit(vec_array, n, seed)
         return gmm.predict(vec_array)
 
     def run_all_in_one_cluster(self, vec_array):
@@ -45,11 +35,15 @@ class VerbSenseClustering:
         ).fillna(0)
         for t, p in zip(true_array, pred_array):
             df_matrix.loc[t, p] += 1
-        lsa_index, lsa_columns = linear_sum_assignment(df_matrix.values, maximize=True)
+        lsa_index, lsa_columns = linear_sum_assignment(
+            df_matrix.values, maximize=True
+        )
 
         true2pred = {
             k: v
-            for k, v in zip(df_matrix.index[lsa_index], df_matrix.columns[lsa_columns])
+            for k, v in zip(
+                df_matrix.index[lsa_index], df_matrix.columns[lsa_columns]
+            )
         }
         count = 0
         for k, v in true2pred.items():
@@ -61,14 +55,12 @@ class VerbSenseClustering:
     def run_clustering_abic(self, vec_array, n_clusters):
         output_list = []
         for n in range(1, n_clusters + 1):
-            seed = 0 if self.n_seeds == 1 else self._repeat_clustering(vec_array, n)
-            gmm = GaussianMixture(
-                n_components=n,
-                covariance_type=self.covariance_type,
-                random_state=seed,
-            )
-            gmm.fit(vec_array)
+            if self.n_seeds == 1:
+                seed = 0
+            else:
+                seed = self._repeat_clustering(vec_array, n)
 
+            gmm = self.gmm_fit(vec_array, n, seed)
             output_list.append(
                 {
                     "n_clusters": n,
@@ -78,11 +70,29 @@ class VerbSenseClustering:
             )
         return pd.DataFrame(output_list)
 
+    def gmm_fit(self, vec_array, n, seed):
+        try:
+            gmm = GaussianMixture(
+                n_components=n,
+                covariance_type=self.covariance_type,
+                random_state=seed,
+            )
+            gmm.fit(vec_array)
+        except:
+            gmm = GaussianMixture(
+                n_components=1,
+                covariance_type=self.covariance_type,
+                random_state=seed,
+            )
+            gmm.fit(vec_array)
+        return gmm
+
     def aggregate_abic(self, df, c, max_n_frames, max_n_clusters):
         df["bic"] = df["first"] + df["second"] * c
 
         df_cm = pd.DataFrame(
-            index=range(1, max_n_frames + 1), columns=range(1, max_n_clusters + 1)
+            index=range(1, max_n_frames + 1),
+            columns=range(1, max_n_clusters + 1),
         ).fillna(0)
 
         output_list = []
