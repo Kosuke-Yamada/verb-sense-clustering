@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 
-source_dir=../../source/prprocessing
-data_dir=../../data/prprocessing
+source_dir=../../source/preprocessing
+data_dir=../../data/preprocessing
 input_dir=../../download/fndata-1.7
 
 python ${source_dir}/extract_exemplars_framenet.py \
-    --input_path ${input_dir}/lu \
-    --output_path ${data_dir}/framenet
+    --input_dir ${input_dir}/lu \
+    --output_dir ${data_dir}/framenet

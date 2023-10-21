@@ -1,51 +1,17 @@
-# -*-coding:utf-8-*-
-
 import argparse
-import glob
-import os
 import re
 import xml.etree.ElementTree as ET
+from pathlib import Path
 
-import pandas as pd
 from tqdm import tqdm
 
-
-def parse_args():
-    parser = argparse.ArgumentParser()
-    parser.add_argument(
-        "--input_frame_path",
-        type=str,
-        default="../data/raw/ontonotes/metadata/frames",
-    )
-    parser.add_argument(
-        "--input_anno_path", type=str, default="../data/raw/ontonotes/annotations"
-    )
-    parser.add_argument(
-        "--output_path",
-        type=str,
-        default="../data/preprocessing/propbank",
-    )
-    return parser.parse_args()
+from vsc.data_utils import write_json
 
 
-def make_dir_path(input_frame_path, input_anno_path, output_path):
-    path_dict = {
-        "input_frame": input_frame_path,
-        "input_anno": input_anno_path,
-        "output": output_path,
-    }
-    for key, path in path_dict.items():
-        path_dict[key] = os.path.abspath(path) + "/"
-        if "output" in key:
-            if not os.path.isdir(path_dict[key]):
-                os.makedirs(path_dict[key])
-    return path_dict
-
-
-def make_exemplars_dataframe(frame_list, anno_list):
+def make_exemplars(frames, anno_list):
     id2frame = {}
-    for path in tqdm(frame_list):
-        root = ET.parse(path).getroot()
+    for file in tqdm(frames):
+        root = ET.parse(file).getroot()
         for e in root.findall("predicate"):
             for ee in e:
                 if len(ee.attrib) != 0:
@@ -89,26 +55,23 @@ def make_exemplars_dataframe(frame_list, anno_list):
                     lu_id = line.split()[1]
                     lu_id_list.append(lu_id)
                     target_widx_list.append(word_count)
-    return pd.DataFrame(output_list)
+    return output_list
 
 
-def main():
-    args = parse_args()
-    path_dict = make_dir_path(
-        args.input_frame_path, args.input_anno_path, args.output_path
+def main(args):
+    args.output_dir.mkdir(parents=True, exist_ok=True)
+
+    outputs = make_exemplars(
+        args.input_frame_dir.glob("*.xml"),
+        args.input_annotation_dir.glob("*/*/*/*.onf"),
     )
-
-    frame_list = glob.glob(path_dict["input_frame"] + "*xml")
-    anno_list = glob.glob(path_dict["input_anno"] + "*/*/*/*.onf")
-
-    df = make_exemplars_dataframe(frame_list, anno_list)
-    df.to_json(
-        path_dict["output"] + "exemplars.jsonl",
-        orient="records",
-        force_ascii=False,
-        lines=True,
-    )
+    write_json(outputs, args.output_dir / "exemplars.jsonl")
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--input_frame_dir", type=Path, required=True)
+    parser.add_argument("--input_annotation_dir", type=Path, required=True)
+    parser.add_argument("--output_dir", type=Path, required=True)
+    args = parser.parse_args()
+    main(args)

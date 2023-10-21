@@ -6,5 +6,6 @@ build/
 
 download/
 data/
+old_data/
 
 *.ipynb
