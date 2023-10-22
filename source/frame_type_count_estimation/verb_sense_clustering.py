@@ -7,6 +7,7 @@ from tqdm import tqdm
 
 from vsc.clustering import VerbSenseClustering
 from vsc.data_utils import read_json, read_jsonl, write_json, write_jsonl
+from vsc.scoring import eval_confusion_matrix
 
 
 def make_df_abic(vsc, df, vec_array, max_n_frames):
@@ -36,6 +37,28 @@ def decide_params(vsc, df_abic, max_n_frames):
     return {"diff_n": diff_n, "min_c": min_c}
 
 
+def aggregate_abic(df, c, max_n_frames, max_n_clusters):
+    df["bic"] = df["first"] + df["second"] * c
+
+    df_cm = pd.DataFrame(
+        index=range(1, max_n_frames + 1),
+        columns=range(1, max_n_clusters + 1),
+    ).fillna(0)
+
+    output_list = []
+    for verb in sorted(set(df["verb"])):
+        df_verb = df[df["verb"] == verb]
+        df_min = df_verb[df_verb["bic"] == df_verb["bic"].min()]
+        n_frames = df_min["n_frames"].values[0]
+        n_clusters = df_min["n_clusters"].values[0]
+        df_cm.loc[n_frames, n_clusters] += 1
+
+        output_list.append(
+            {"verb": verb, "n_frames": n_frames, "n_clusters": n_clusters}
+        )
+    return df_cm, pd.DataFrame(output_list)
+
+
 def main(args):
     args.output_dir.mkdir(parents=True, exist_ok=True)
     if args.layer == "best":
@@ -49,18 +72,16 @@ def main(args):
         layer = args.layer
 
     df = pd.DataFrame(read_jsonl(args.input_dir / "exemplars.jsonl"))
-    vec_array = np.load(
-        args.input_dir / f"vec-{layer}.npz",
-        allow_pickle=True,
-    )["vec"]
+    vec_array = np.load(args.input_dir / f"vec-{layer}.npz", allow_pickle=True)[
+        "vec"
+    ]
 
-    max_n_frames_dev = max(
-        [
-            len(f)
-            for f in df[df["sets"] == "dev"]
-            .groupby("verb")
-            .agg(set)["frame_name"]
-        ]
+    max_n_frames_dev = (
+        df[df["sets"] == "dev"]
+        .groupby("verb")["frame_name"]
+        .agg(set)
+        .apply(len)
+        .max()
     )
 
     df = df[df["sets"] == args.sets]
@@ -80,18 +101,18 @@ def main(args):
             write_json(params, args.output_dir / file)
 
     elif args.sets == "test":
-        max_n_frames = max(
-            [len(f) for f in df.groupby("verb").agg(set)["frame_name"]]
+        max_n_frames = (
+            df.groupby("verb")["frame_name"].agg(set).apply(len).max()
         )
         max_n_clusters = max_n_frames_dev
         if args.criterion == "abic":
             file = f"params-{args.layer}.json"
             write_json(params, args.output_dir / file)
 
-    df_cm, df_output = vsc.aggregate_abic(
+    df_cm, df_output = aggregate_abic(
         df_abic, params["min_c"], max_n_frames, max_n_clusters
     )
-    score_dict = vsc.scoring(df_output)
+    score_dict = eval_confusion_matrix(df_output)
 
     file = f"confusion_matrix-{args.layer}.jsonl"
     write_jsonl(df_cm.to_dict("records"), args.output_dir / file)

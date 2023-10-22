@@ -3,10 +3,18 @@ from pathlib import Path
 
 import numpy as np
 import pandas as pd
+from scipy.optimize import linear_sum_assignment
 from tqdm import tqdm
 
 from vsc.clustering import VerbSenseClustering
 from vsc.data_utils import read_json, read_jsonl, write_json, write_jsonl
+
+
+def calc_matching_scores(true_array, pred_array):
+    df = pd.crosstab(pd.Series(true_array), pd.Series(pred_array))
+    lsa_index, lsa_columns = linear_sum_assignment(-df.values)
+    score = df.values[lsa_index, lsa_columns].sum() / df.values.sum()
+    return score
 
 
 def main(args):
@@ -22,10 +30,9 @@ def main(args):
         layer = args.layer
 
     df = pd.DataFrame(read_jsonl(args.input_dir / "exemplars.jsonl"))
-    vec_array = np.load(
-        args.input_dir / f"vec-{layer}.npz",
-        allow_pickle=True,
-    )["vec"]
+    vec_array = np.load(args.input_dir / f"vec-{layer}.npz", allow_pickle=True)[
+        "vec"
+    ]
 
     df = df[df["sets"] == args.sets]
     vec_array = vec_array[df.index]
@@ -43,7 +50,7 @@ def main(args):
             df_verb["cluster_id"] = vsc.run_clustering(
                 vec_verb, len(set(df_verb["frame_name"]))
             )
-        score = vsc.calc_matching_scores(
+        score = calc_matching_scores(
             df_verb["frame_name"], df_verb["cluster_id"]
         )
         output_list.append({"verb": verb, "score": score})
@@ -63,9 +70,6 @@ if __name__ == "__main__":
     parser.add_argument("--output_dir", type=Path, required=True)
     parser.add_argument("--input_dev_dir", type=Path, required=False)
 
-    parser.add_argument(
-        "--resource", type=str, choices=["framenet", "propbank"]
-    )
     parser.add_argument(
         "--model_name",
         type=str,
