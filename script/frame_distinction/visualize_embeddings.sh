@@ -1,18 +1,17 @@
-#!/bin/bash
+# !/bin/bash
 
 source_dir=../../source/frame_distinction
 data_dir=../../data/frame_distinction
 
 resources=(framenet propbank)
 
-#model_name=all-in-one-cluster
-model_name=elmo
-#model_name=bert-base-uncased
-# model_name=bert-large-uncased
-#model_name=albert-base-v2
-#model_name=roberta-base
-#model_name=gpt2
-#model_name=xlnet-base-cased
+# model_name=elmo
+# model_name=bert-base-uncased
+model_name=bert-large-uncased
+# model_name=albert-base-v2
+# model_name=roberta-base
+# model_name=gpt2
+# model_name=xlnet-base-cased
 
 #sets=dev
 sets=test

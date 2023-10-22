@@ -4,11 +4,13 @@ source_dir=../../source/frame_distinction
 data_dir=../../data/frame_type_count_estimation
 input_dir=../../donwload/elmo
 
-resources=(framenet propbank)
+# resources=(framenet propbank)
+# resources=(framenet)
+resources=(propbank)
 
-#model_name=elmo
-#model_name=bert-base-uncased
-model_name=bert-large-uncased
+# model_name=elmo
+model_name=bert-base-uncased
+# model_name=bert-large-uncased
 #model_name=albert-base-v2
 #model_name=roberta-base
 #model_name=gpt2

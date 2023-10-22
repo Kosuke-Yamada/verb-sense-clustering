@@ -9,7 +9,11 @@ def eval_confusion_matrix(df):
 
 
 def calc_spearman(df):
-    return df.corr("spearman").loc["n_frames", "n_clusters"]
+    return (
+        df[["n_frames", "n_clusters"]]
+        .corr("spearman")
+        .loc["n_frames", "n_clusters"]
+    )
 
 
 def calc_accuracy(df):

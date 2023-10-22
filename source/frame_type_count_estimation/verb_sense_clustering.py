@@ -11,26 +11,25 @@ from vsc.scoring import eval_confusion_matrix
 
 
 def make_df_abic(vsc, df, vec_array, max_n_frames):
+    print("make_df_abic")
     abic_list = []
     for verb in tqdm(sorted(set(df["verb"]))):
         df_verb = df[df["verb"] == verb].copy()
         vec_verb = vec_array[df_verb.index]
 
-        temp_df_abic = vsc.run_clustering_abic(vec_verb, max_n_frames)
-        temp_df_abic["verb"] = verb
-        temp_df_abic["n_frames"] = len(set(df_verb["frame_name"]))
-        abic_list += temp_df_abic.to_dict("records")
+        df_abic = vsc.run_clustering_abic(vec_verb, max_n_frames)
+        df_abic["verb"] = verb
+        df_abic["n_frames"] = len(set(df_verb["frame_name"]))
+        abic_list += df_abic.to_dict("records")
     return pd.DataFrame(abic_list)
 
 
-def decide_params(vsc, df_abic, max_n_frames):
+def decide_params(df_abic, max_n_frames):
+    print("abc")
     min_diff_n, min_c = 1e10, -1
     for c in tqdm([i / 10 for i in range(51)]):
-        _, df_output = vsc.aggregate_abic(
-            df_abic, c, max_n_frames, max_n_frames
-        )
+        _, df_output = aggregate_abic(df_abic, c, max_n_frames, max_n_frames)
         diff_n = abs(sum(df_output["n_frames"]) - sum(df_output["n_clusters"]))
-
         if min_diff_n >= diff_n:
             min_diff_n = diff_n
             min_c = c
@@ -39,24 +38,11 @@ def decide_params(vsc, df_abic, max_n_frames):
 
 def aggregate_abic(df, c, max_n_frames, max_n_clusters):
     df["bic"] = df["first"] + df["second"] * c
-
-    df_cm = pd.DataFrame(
-        index=range(1, max_n_frames + 1),
-        columns=range(1, max_n_clusters + 1),
-    ).fillna(0)
-
-    output_list = []
-    for verb in sorted(set(df["verb"])):
-        df_verb = df[df["verb"] == verb]
-        df_min = df_verb[df_verb["bic"] == df_verb["bic"].min()]
-        n_frames = df_min["n_frames"].values[0]
-        n_clusters = df_min["n_clusters"].values[0]
-        df_cm.loc[n_frames, n_clusters] += 1
-
-        output_list.append(
-            {"verb": verb, "n_frames": n_frames, "n_clusters": n_clusters}
-        )
-    return df_cm, pd.DataFrame(output_list)
+    df_min = df.loc[df.groupby("verb")["bic"].idxmin()]
+    df_cm = df_min.pivot_table(
+        index="n_frames", columns="n_clusters", aggfunc="size", fill_value=0
+    )
+    return df_cm, df_min[["verb", "n_frames", "n_clusters"]]
 
 
 def main(args):
@@ -96,7 +82,7 @@ def main(args):
         max_n_frames = max_n_frames_dev
         max_n_clusters = max_n_frames_dev
         if args.criterion == "abic":
-            params = decide_params(vsc, df_abic, max_n_frames_dev)
+            params = decide_params(df_abic, max_n_frames_dev)
             file = f"params-{args.layer}.json"
             write_json(params, args.output_dir / file)
 
@@ -106,8 +92,7 @@ def main(args):
         )
         max_n_clusters = max_n_frames_dev
         if args.criterion == "abic":
-            file = f"params-{args.layer}.json"
-            write_json(params, args.output_dir / file)
+            params = read_json(args.input_params_file)
 
     df_cm, df_output = aggregate_abic(
         df_abic, params["min_c"], max_n_frames, max_n_clusters
@@ -117,10 +102,10 @@ def main(args):
     file = f"confusion_matrix-{args.layer}.jsonl"
     write_jsonl(df_cm.to_dict("records"), args.output_dir / file)
 
-    file = f"n_frames_clusters-{layer}.jsonl"
+    file = f"n_frames_clusters-{args.layer}.jsonl"
     write_jsonl(df_output.to_dict("records"), args.output_dir / file)
 
-    file = f"score-{layer}.json"
+    file = f"score-{args.layer}.json"
     write_json(score_dict, args.output_dir / file)
 
 
@@ -128,6 +113,7 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--input_dir", type=Path)
     parser.add_argument("--input_dev_dir", type=Path)
+    parser.add_argument("--input_params_file", type=Path)
     parser.add_argument("--output_dir", type=Path)
 
     parser.add_argument(

@@ -14,7 +14,7 @@ class VerbSenseClustering:
         else:
             best_score, best_seed = -float("inf"), -1
             for seed in range(self.n_seeds):
-                gmm = self.gmm_fit(vec_array, n, seed)
+                gmm = self.fit_gmm(vec_array, n, seed)
                 score = gmm.score(vec_array)
                 if score >= best_score:
                     best_score = score

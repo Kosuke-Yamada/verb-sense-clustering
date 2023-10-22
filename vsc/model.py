@@ -9,7 +9,7 @@ class EmbeddingsNet(nn.Module):
         super(EmbeddingsNet, self).__init__()
         self.model_name = model_name
         self.device = device
-        if model_name in ["elmo"]:
+        if model_name == "elmo":
             self.model = Elmo(options, weights, 2, dropout=0).to(device)
             self.model_t = _ElmoCharacterEncoder(options, weights).to(device)
         else:
@@ -42,7 +42,7 @@ class EmbeddingsNet(nn.Module):
         return torch.cat([e.unsqueeze(0) for e in embs])
 
     def get_vec(self, batch):
-        if self.model_name in ["elmo"]:
+        if self.model_name == "elmo":
             embs = self._get_elmo(batch)
         else:
             embs = self._get_transformers(batch)
