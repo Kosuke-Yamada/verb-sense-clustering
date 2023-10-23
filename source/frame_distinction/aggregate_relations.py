@@ -66,7 +66,7 @@ def main(args):
     }
     print(score_dict)
 
-    file = f"score_{args.layer}.json"
+    file = f"score-{args.layer}.json"
     write_json(score_dict, args.output_dir / file)
 
 
